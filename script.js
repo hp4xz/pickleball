@@ -1,20 +1,20 @@
 const MAX_PLAYERS = 24;
 
+const SUPABASE_URL = "https://unlnzhctvydpbtrpvoai.supabase.co";
+
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVubG56aGN0dnlkcGJ0cnB2b2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTc0NDIsImV4cCI6MjA5NTYzMzQ0Mn0.UlZE8uslUR4VziAeW7uc8i12DZPsO8y7hSoN8YKx5CQ";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
 const form = document.getElementById("signup-form");
-const cancelButton = document.getElementById("cancel-button");
 const statusDiv = document.getElementById("status");
 
 const confirmedList = document.getElementById("confirmed-list");
 const waitlistList = document.getElementById("waitlist-list");
 const spotsLeft = document.getElementById("spots-left");
-
-function getSignups() {
-    return JSON.parse(localStorage.getItem("signups")) || [];
-}
-
-function saveSignups(signups) {
-    localStorage.setItem("signups", JSON.stringify(signups));
-}
 
 function getMySignupIds() {
     return JSON.parse(localStorage.getItem("mySignupIds")) || [];
@@ -35,8 +35,24 @@ function removeMySignupId(id) {
     localStorage.setItem("mySignupIds", JSON.stringify(ids));
 }
 
-function renderLists() {
-    const signups = getSignups();
+async function getSignups() {
+    const { data, error } = await supabaseClient
+        .from("signups")
+        .select("*")
+        .is("cancelled_at", null)
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        console.error(error);
+        statusDiv.textContent = "Error loading signups.";
+        return [];
+    }
+
+    return data;
+}
+
+async function renderLists() {
+    const signups = await getSignups();
 
     const confirmed = signups.filter(person => person.status === "confirmed");
     const waitlist = signups.filter(person => person.status === "waitlist");
@@ -59,8 +75,8 @@ function renderLists() {
     spotsLeft.textContent = `${confirmed.length}/${MAX_PLAYERS} spots filled`;
 }
 
-function updateMyStatus() {
-    const signups = getSignups();
+async function updateMyStatus() {
+    const signups = await getSignups();
     const mySignupIds = getMySignupIds();
 
     const mySignups = signups.filter(person => mySignupIds.includes(person.id));
@@ -77,23 +93,29 @@ function updateMyStatus() {
     } else {
         statusDiv.textContent = "";
     }
-
-    form.style.display = "block";
-    cancelButton.style.display = "none";
 }
 
-function promoteWaitlist(signups) {
+async function promoteWaitlist() {
+    const signups = await getSignups();
+
     const confirmed = signups.filter(person => person.status === "confirmed");
     const waitlist = signups.filter(person => person.status === "waitlist");
 
     if (confirmed.length < MAX_PLAYERS && waitlist.length > 0) {
-        waitlist[0].status = "confirmed";
-    }
+        const nextPerson = waitlist[0];
 
-    return signups;
+        const { error } = await supabaseClient
+            .from("signups")
+            .update({ status: "confirmed" })
+            .eq("id", nextPerson.id);
+
+        if (error) {
+            console.error(error);
+        }
+    }
 }
 
-form.addEventListener("submit", (e) => {
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const name = document.getElementById("name").value.trim();
@@ -104,39 +126,59 @@ form.addEventListener("submit", (e) => {
         return;
     }
 
-    let signups = getSignups();
-
+    const signups = await getSignups();
     const confirmedCount = signups.filter(person => person.status === "confirmed").length;
 
-    const newPerson = {
-        id: crypto.randomUUID(),
-        name: name,
-        phone: phone,
-        status: confirmedCount < MAX_PLAYERS ? "confirmed" : "waitlist",
-        createdAt: new Date().toISOString()
-    };
+    const newStatus = confirmedCount < MAX_PLAYERS ? "confirmed" : "waitlist";
 
-    signups.push(newPerson);
-    saveSignups(signups);
-    saveMySignupId(newPerson.id);
+    const { data, error } = await supabaseClient
+        .from("signups")
+        .insert([
+            {
+                name: name,
+                phone: phone || null,
+                status: newStatus
+            }
+        ])
+        .select()
+        .single();
+
+    if (error) {
+        console.error(error);
+        statusDiv.textContent = "Error signing up.";
+        return;
+    }
+
+    saveMySignupId(data.id);
 
     form.reset();
-    renderLists();
-    updateMyStatus();
+
+    await renderLists();
+    await updateMyStatus();
 });
 
-function cancelSignup(id) {
-    let signups = getSignups();
+async function cancelSignup(id) {
+    const { error } = await supabaseClient
+        .from("signups")
+        .update({ cancelled_at: new Date().toISOString() })
+        .eq("id", id);
 
-    signups = signups.filter(person => person.id !== id);
-    signups = promoteWaitlist(signups);
+    if (error) {
+        console.error(error);
+        statusDiv.textContent = "Error canceling signup.";
+        return;
+    }
 
-    saveSignups(signups);
     removeMySignupId(id);
 
-    renderLists();
-    updateMyStatus();
+    await promoteWaitlist();
+    await renderLists();
+    await updateMyStatus();
 }
 
-renderLists();
-updateMyStatus();
+async function refreshPage() {
+    await renderLists();
+    await updateMyStatus();
+}
+
+refreshPage();
