@@ -18,10 +18,66 @@ const newWeekButton = document.getElementById("new-week-button");
 const addNameInput = document.getElementById("add-name");
 const addPhoneInput = document.getElementById("add-phone");
 const addPlayerButton = document.getElementById("add-player-button");
+const shuffleButton = document.getElementById("shuffle-button");
 
 const adminList = document.getElementById("admin-list");
 const adminStatus = document.getElementById("admin-status");
+shuffleButton.addEventListener("click", shuffleCourts);
+async function shuffleCourts() {
 
+    const signups = await getSignups();
+
+    const players = signups
+        .filter(p => p.status === "confirmed")
+        .map(p => p.name);
+
+    if (players.length === 0) {
+        adminStatus.textContent = "No confirmed players.";
+        return;
+    }
+
+    for (let i = players.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+
+        [players[i], players[j]] =
+            [players[j], players[i]];
+    }
+
+    await supabaseClient.rpc(
+        "clear_court_assignments"
+    );
+
+    const rows = [];
+
+    for (let i = 0; i < players.length; i++) {
+
+        const courtNumber =
+            Math.floor(i / 4) + 1;
+
+        const pairNumber =
+            Math.floor((i % 4) / 2) + 1;
+
+        rows.push({
+            court_number: courtNumber,
+            pair_number: pairNumber,
+            player_name: players[i]
+        });
+    }
+
+    const { error } = await supabaseClient
+        .from("court_assignments")
+        .insert(rows);
+
+    if (error) {
+        console.error(error);
+        adminStatus.textContent =
+            "Shuffle failed.";
+        return;
+    }
+
+    adminStatus.textContent =
+        "Courts shuffled.";
+}
 async function checkSession() {
     const { data } = await supabaseClient.auth.getSession();
 
