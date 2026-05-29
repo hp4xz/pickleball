@@ -237,8 +237,41 @@ async function cancelSignup(id) {
 }
 
 async function refreshPage() {
+    await maybeResetForNewWeek();
     await renderLists();
     await updateMyStatus();
 }
+async function maybeResetForNewWeek() {
 
+    const now = new Date();
+
+    const day = now.getDay();
+    const hour = now.getHours();
+
+    if (!(day === 4 && hour >= 8)) {
+        return;
+    }
+
+    const { data } = await supabaseClient
+        .from("site_settings")
+        .select("value")
+        .eq("key", "last_reset")
+        .single();
+
+    const lastReset = new Date(data.value);
+
+    const thisThursday = new Date(now);
+
+    thisThursday.setDate(
+        now.getDate() - ((day + 7 - 4) % 7)
+    );
+
+    thisThursday.setHours(8, 0, 0, 0);
+
+    if (lastReset >= thisThursday) {
+        return;
+    }
+
+    await supabaseClient.rpc("reset_for_new_week");
+}
 refreshPage();
