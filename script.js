@@ -133,7 +133,7 @@ form.addEventListener("submit", async (e) => {
         statusDiv.textContent = "Error signing up.";
         return;
     }
-
+    console.log("Inserted signup:", data);
     saveMySignup(data.id, data.signup_token);
 
     form.reset();
