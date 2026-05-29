@@ -9,39 +9,91 @@
 <body>
 
     <div class="page">
+
         <div class="signup-card">
-            <h1>Admin</h1>
+
+            <h1>Admin Panel</h1>
 
             <div id="login-box">
-                <input type="password" id="admin-password" placeholder="Admin password">
-                <button id="login-button">Log In</button>
+
+                <input
+                    type="email"
+                    id="admin-email"
+                    placeholder="Admin Email"
+                >
+
+                <input
+                    type="password"
+                    id="admin-password"
+                    placeholder="Admin Password"
+                >
+
+                <button id="login-button">
+                    Log In
+                </button>
+
             </div>
 
             <div id="admin-panel" style="display:none;">
-                <h2>Add Player</h2>
 
-                <input type="text" id="add-name" placeholder="Name">
-                <input type="tel" id="add-phone" placeholder="Phone Number (optional)">
-
-                <button id="add-confirmed-button">Add as Confirmed</button>
-                <button id="add-waitlist-button">Add to Waitlist</button>
+                <button
+                    id="logout-button"
+                    class="cancel"
+                >
+                    Log Out
+                </button>
 
                 <hr>
 
-                <button id="refresh-button">Refresh List</button>
-                <button id="clear-button" class="cancel">Clear All Signups</button>
+                <h2>Add Player</h2>
+
+                <input
+                    type="text"
+                    id="add-name"
+                    placeholder="Name"
+                >
+
+                <input
+                    type="tel"
+                    id="add-phone"
+                    placeholder="Phone Number (optional)"
+                >
+
+                <button id="add-player-button">
+                    Add Player
+                </button>
+
+                <hr>
+
+                <button id="refresh-button">
+                    Refresh List
+                </button>
+
+                <button
+                    id="new-week-button"
+                    class="cancel"
+                >
+                    Start New Week
+                </button>
 
                 <div id="admin-status"></div>
+
             </div>
+
         </div>
 
         <div class="list-card">
+
             <h2>All Active Signups</h2>
+
             <div id="admin-list"></div>
+
         </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="admin.js"></script>
+
 </body>
 </html>

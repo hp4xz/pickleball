@@ -3,97 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pickleball Admin</title>
+    <title>Tuesday Pickleball Signup</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <div class="page">
-
         <div class="signup-card">
+            <h1>Tuesday Pickleball</h1>
+            <p class="subtitle">Tuesday at 6:00 PM</p>
 
-            <h1>Admin Panel</h1>
+            <div id="status"></div>
 
-            <div id="login-box">
-
-                <input
-                    type="email"
-                    id="admin-email"
-                    placeholder="Admin Email"
-                >
-
-                <input
-                    type="password"
-                    id="admin-password"
-                    placeholder="Admin Password"
-                >
-
-                <button id="login-button">
-                    Log In
-                </button>
-
-            </div>
-
-            <div id="admin-panel" style="display:none;">
-
-                <button
-                    id="logout-button"
-                    class="cancel"
-                >
-                    Log Out
-                </button>
-
-                <hr>
-
-                <h2>Add Player</h2>
-
-                <input
-                    type="text"
-                    id="add-name"
-                    placeholder="Name"
-                >
-
-                <input
-                    type="tel"
-                    id="add-phone"
-                    placeholder="Phone Number (optional)"
-                >
-
-                <button id="add-player-button">
-                    Add Player
-                </button>
-
-                <hr>
-
-                <button id="refresh-button">
-                    Refresh List
-                </button>
-
-                <button
-                    id="new-week-button"
-                    class="cancel"
-                >
-                    Start New Week
-                </button>
-
-                <div id="admin-status"></div>
-
-            </div>
-
+            <form id="signup-form">
+                <input type="text" id="name" placeholder="Your Name" required>
+                <input type="tel" id="phone" placeholder="Phone Number (optional)">
+                <button type="submit">Sign Me Up</button>
+            </form>
         </div>
 
         <div class="list-card">
+            <h2>Confirmed Players</h2>
+            <p id="spots-left"></p>
+            <ol id="confirmed-list"></ol>
 
-            <h2>All Active Signups</h2>
-
-            <div id="admin-list"></div>
-
+            <h2>Waitlist</h2>
+            <ol id="waitlist-list"></ol>
         </div>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="admin.js"></script>
-
+    <script src="script.js"></script>
 </body>
 </html>
