@@ -1,0 +1,89 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f3f3f3;
+    margin: 0;
+    padding: 30px;
+}
+
+.page {
+    display: flex;
+    gap: 25px;
+    max-width: 900px;
+    margin: auto;
+    align-items: flex-start;
+}
+
+.signup-card,
+.list-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+.signup-card {
+    width: 380px;
+}
+
+.list-card {
+    flex: 1;
+}
+
+h1, h2 {
+    margin-top: 0;
+}
+
+.subtitle {
+    font-size: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    box-sizing: border-box;
+    font-size: 18px;
+}
+
+button {
+    width: 100%;
+    padding: 16px;
+    margin-top: 15px;
+    font-size: 20px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    background: #2f855a;
+    color: white;
+}
+
+button.cancel {
+    background: #c53030;
+}
+
+#status {
+    font-size: 18px;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+#spots-left {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+li {
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+
+@media (max-width: 700px) {
+    .page {
+        flex-direction: column;
+    }
+
+    .signup-card,
+    .list-card {
+        width: 100%;
+    }
+}
