@@ -4,6 +4,8 @@ const SUPABASE_URL = "https://unlnzhctvydpbtrpvoai.supabase.co";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVubG56aGN0dnlkcGJ0cnB2b2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTc0NDIsImV4cCI6MjA5NTYzMzQ0Mn0.UlZE8uslUR4VziAeW7uc8i12DZPsO8y7hSoN8YKx5CQ";
 
+
+
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
@@ -16,29 +18,31 @@ const confirmedList = document.getElementById("confirmed-list");
 const waitlistList = document.getElementById("waitlist-list");
 const spotsLeft = document.getElementById("spots-left");
 
-function getMySignupIds() {
-    return JSON.parse(localStorage.getItem("mySignupIds")) || [];
+function getMySignups() {
+    return JSON.parse(localStorage.getItem("mySignups")) || [];
 }
 
-function saveMySignupId(id) {
-    const ids = getMySignupIds();
+function saveMySignup(id, token) {
+    const mySignups = getMySignups();
 
-    if (!ids.includes(id)) {
-        ids.push(id);
+    const alreadySaved = mySignups.some(signup => signup.id === id);
+
+    if (!alreadySaved) {
+        mySignups.push({ id: id, token: token });
     }
 
-    localStorage.setItem("mySignupIds", JSON.stringify(ids));
+    localStorage.setItem("mySignups", JSON.stringify(mySignups));
 }
 
-function removeMySignupId(id) {
-    const ids = getMySignupIds().filter(savedId => savedId !== id);
-    localStorage.setItem("mySignupIds", JSON.stringify(ids));
+function removeMySignup(id) {
+    const mySignups = getMySignups().filter(signup => signup.id !== id);
+    localStorage.setItem("mySignups", JSON.stringify(mySignups));
 }
 
 async function getSignups() {
     const { data, error } = await supabaseClient
         .from("signups")
-        .select("*")
+        .select("id, name, phone, status, created_at")
         .is("cancelled_at", null)
         .order("created_at", { ascending: true });
 
@@ -77,14 +81,15 @@ async function renderLists() {
 
 async function updateMyStatus() {
     const signups = await getSignups();
-    const mySignupIds = getMySignupIds();
+    const mySignups = getMySignups();
 
-    const mySignups = signups.filter(person => mySignupIds.includes(person.id));
+    const mySignupIds = mySignups.map(signup => signup.id);
+    const visibleMySignups = signups.filter(person => mySignupIds.includes(person.id));
 
-    if (mySignups.length > 0) {
+    if (visibleMySignups.length > 0) {
         statusDiv.innerHTML = `
             <p>You signed up:</p>
-            ${mySignups.map(person => `
+            ${visibleMySignups.map(person => `
                 <button class="cancel" onclick="cancelSignup('${person.id}')">
                     Cancel ${person.name}
                 </button>
@@ -92,26 +97,6 @@ async function updateMyStatus() {
         `;
     } else {
         statusDiv.textContent = "";
-    }
-}
-
-async function promoteWaitlist() {
-    const signups = await getSignups();
-
-    const confirmed = signups.filter(person => person.status === "confirmed");
-    const waitlist = signups.filter(person => person.status === "waitlist");
-
-    if (confirmed.length < MAX_PLAYERS && waitlist.length > 0) {
-        const nextPerson = waitlist[0];
-
-        const { error } = await supabaseClient
-            .from("signups")
-            .update({ status: "confirmed" })
-            .eq("id", nextPerson.id);
-
-        if (error) {
-            console.error(error);
-        }
     }
 }
 
@@ -140,7 +125,7 @@ form.addEventListener("submit", async (e) => {
                 status: newStatus
             }
         ])
-        .select()
+        .select("id, signup_token")
         .single();
 
     if (error) {
@@ -149,19 +134,28 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    saveMySignupId(data.id);
+    saveMySignup(data.id, data.signup_token);
 
     form.reset();
 
-    await renderLists();
-    await updateMyStatus();
-});
+    await refreshPage();
+}
+
+);
 
 async function cancelSignup(id) {
-    const { error } = await supabaseClient
-        .from("signups")
-        .update({ cancelled_at: new Date().toISOString() })
-        .eq("id", id);
+    const mySignups = getMySignups();
+    const mySignup = mySignups.find(signup => signup.id === id);
+
+    if (!mySignup) {
+        statusDiv.textContent = "This signup was not created from this device.";
+        return;
+    }
+
+    const { error } = await supabaseClient.rpc("cancel_signup_by_token", {
+        p_signup_id: mySignup.id,
+        p_signup_token: mySignup.token
+    });
 
     if (error) {
         console.error(error);
@@ -169,11 +163,9 @@ async function cancelSignup(id) {
         return;
     }
 
-    removeMySignupId(id);
+    removeMySignup(id);
 
-    await promoteWaitlist();
-    await renderLists();
-    await updateMyStatus();
+    await refreshPage();
 }
 
 async function refreshPage() {
