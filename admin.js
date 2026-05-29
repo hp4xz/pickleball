@@ -43,10 +43,6 @@ async function shuffleCourts() {
             [players[j], players[i]];
     }
 
-    await supabaseClient.rpc(
-        "clear_court_assignments"
-    );
-
     const rows = [];
 
     for (let i = 0; i < players.length; i++) {
@@ -64,9 +60,12 @@ async function shuffleCourts() {
         });
     }
 
-    const { error } = await supabaseClient
-        .from("court_assignments")
-        .insert(rows);
+    const { error } = await supabaseClient.rpc(
+        "admin_save_court_assignments",
+        {
+            assignments: rows
+        }
+    );
 
     if (error) {
         console.error(error);
@@ -75,8 +74,8 @@ async function shuffleCourts() {
         return;
     }
 
-    adminStatus.textContent =
-        "Courts shuffled.";
+adminStatus.textContent =
+    "Courts shuffled.";
 }
 async function checkSession() {
     const { data } = await supabaseClient.auth.getSession();
