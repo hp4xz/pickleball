@@ -4,8 +4,6 @@ const SUPABASE_URL = "https://unlnzhctvydpbtrpvoai.supabase.co";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVubG56aGN0dnlkcGJ0cnB2b2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTc0NDIsImV4cCI6MjA5NTYzMzQ0Mn0.UlZE8uslUR4VziAeW7uc8i12DZPsO8y7hSoN8YKx5CQ";
 
-
-
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
@@ -18,6 +16,21 @@ const confirmedList = document.getElementById("confirmed-list");
 const waitlistList = document.getElementById("waitlist-list");
 const spotsLeft = document.getElementById("spots-left");
 
+function isSignupOpen() {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    const minutes = now.getMinutes();
+
+    const afterThursdayOpen =
+        day > 4 || (day === 4 && (hour > 8 || (hour === 8 && minutes >= 0)));
+
+    const beforeTuesdayClose =
+        day < 2 || (day === 2 && hour < 18);
+
+    return afterThursdayOpen || beforeTuesdayClose;
+}
+
 function getMySignups() {
     return JSON.parse(localStorage.getItem("mySignups")) || [];
 }
@@ -25,9 +38,7 @@ function getMySignups() {
 function saveMySignup(id, token) {
     const mySignups = getMySignups();
 
-    const alreadySaved = mySignups.some(signup => signup.id === id);
-
-    if (!alreadySaved) {
+    if (!mySignups.some(signup => signup.id === id)) {
         mySignups.push({ id: id, token: token });
     }
 
@@ -76,7 +87,13 @@ async function renderLists() {
         waitlistList.appendChild(li);
     });
 
-    spotsLeft.textContent = `${confirmed.length}/${MAX_PLAYERS} spots filled`;
+    const remaining = MAX_PLAYERS - confirmed.length;
+
+    if (remaining > 0) {
+        spotsLeft.textContent = `${remaining} spot${remaining === 1 ? "" : "s"} remaining`;
+    } else {
+        spotsLeft.textContent = "FULL — new signups go to the waitlist";
+    }
 }
 
 async function updateMyStatus() {
@@ -86,8 +103,17 @@ async function updateMyStatus() {
     const mySignupIds = mySignups.map(signup => signup.id);
     const visibleMySignups = signups.filter(person => mySignupIds.includes(person.id));
 
+    let html = "";
+
+    if (!isSignupOpen()) {
+        html += `<p>Signup is closed. It opens Thursday at 8:00 AM.</p>`;
+        form.style.display = "none";
+    } else {
+        form.style.display = "block";
+    }
+
     if (visibleMySignups.length > 0) {
-        statusDiv.innerHTML = `
+        html += `
             <p>You signed up:</p>
             ${visibleMySignups.map(person => `
                 <button class="cancel" onclick="cancelSignup('${person.id}')">
@@ -95,13 +121,18 @@ async function updateMyStatus() {
                 </button>
             `).join("")}
         `;
-    } else {
-        statusDiv.textContent = "";
     }
+
+    statusDiv.innerHTML = html;
 }
 
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (!isSignupOpen()) {
+        statusDiv.textContent = "Signup is closed. It opens Thursday at 8:00 AM.";
+        return;
+    }
 
     const name = document.getElementById("name").value.trim();
     const phone = document.getElementById("phone").value.trim();
@@ -133,14 +164,12 @@ form.addEventListener("submit", async (e) => {
         statusDiv.textContent = "Error signing up.";
         return;
     }
+
     saveMySignup(data.id, data.signup_token);
 
     form.reset();
-
     await refreshPage();
-}
-
-);
+});
 
 async function cancelSignup(id) {
     const mySignups = getMySignups();
@@ -163,7 +192,6 @@ async function cancelSignup(id) {
     }
 
     removeMySignup(id);
-
     await refreshPage();
 }
 
