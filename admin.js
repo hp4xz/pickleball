@@ -4,32 +4,30 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 );
-// Change this to whatever password you want.
-// This is okay for testing, but not strong security for production.
-const ADMIN_PASSWORD = "superSecret";
 
 const loginBox = document.getElementById("login-box");
 const adminPanel = document.getElementById("admin-panel");
+const emailInput = document.getElementById("admin-email");
 const passwordInput = document.getElementById("admin-password");
 const loginButton = document.getElementById("login-button");
+const logoutButton = document.getElementById("logout-button");
 
 const refreshButton = document.getElementById("refresh-button");
-const clearButton = document.getElementById("clear-button");
+const newWeekButton = document.getElementById("new-week-button");
 
 const addNameInput = document.getElementById("add-name");
 const addPhoneInput = document.getElementById("add-phone");
-const addConfirmedButton = document.getElementById("add-confirmed-button");
-const addWaitlistButton = document.getElementById("add-waitlist-button");
+const addPlayerButton = document.getElementById("add-player-button");
 
 const adminList = document.getElementById("admin-list");
 const adminStatus = document.getElementById("admin-status");
 
-function isLoggedIn() {
-    return sessionStorage.getItem("adminLoggedIn") === "true";
-}
+async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
 
-function setLoggedIn() {
-    sessionStorage.setItem("adminLoggedIn", "true");
+    if (data.session) {
+        showAdminPanel();
+    }
 }
 
 function showAdminPanel() {
@@ -38,45 +36,57 @@ function showAdminPanel() {
     loadAdminList();
 }
 
-loginButton.addEventListener("click", () => {
-    if (passwordInput.value === ADMIN_PASSWORD) {
-        setLoggedIn();
-        showAdminPanel();
-    } else {
-        adminStatus.textContent = "Wrong password.";
+function showLogin() {
+    loginBox.style.display = "block";
+    adminPanel.style.display = "none";
+}
+
+loginButton.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    const { error } = await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        console.error(error);
+        adminStatus.textContent = "Login failed.";
+        return;
     }
+
+    adminStatus.textContent = "";
+    showAdminPanel();
+});
+
+logoutButton.addEventListener("click", async () => {
+    await supabaseClient.auth.signOut();
+    showLogin();
 });
 
 refreshButton.addEventListener("click", loadAdminList);
 
-clearButton.addEventListener("click", async () => {
-    const confirmed = confirm("Clear all signups?");
+newWeekButton.addEventListener("click", async () => {
+    const confirmed = confirm("Start a new week? This clears all current signups.");
 
     if (!confirmed) {
         return;
     }
 
-    const { error } = await supabaseClient.rpc("admin_clear_signups");
+    const { error } = await supabaseClient.rpc("admin_start_new_week");
 
     if (error) {
         console.error(error);
-        adminStatus.textContent = "Error clearing signups.";
+        adminStatus.textContent = "Error starting new week.";
         return;
     }
 
-    adminStatus.textContent = "All signups cleared.";
+    adminStatus.textContent = "New week started.";
     await loadAdminList();
 });
 
-addConfirmedButton.addEventListener("click", () => {
-    adminAddPerson("confirmed");
-});
-
-addWaitlistButton.addEventListener("click", () => {
-    adminAddPerson("waitlist");
-});
-
-async function adminAddPerson(status) {
+addPlayerButton.addEventListener("click", async () => {
     const name = addNameInput.value.trim();
     const phone = addPhoneInput.value.trim();
 
@@ -85,10 +95,9 @@ async function adminAddPerson(status) {
         return;
     }
 
-    const { error } = await supabaseClient.rpc("admin_add_signup", {
+    const { error } = await supabaseClient.rpc("admin_add_signup_smart", {
         p_name: name,
-        p_phone: phone,
-        p_status: status
+        p_phone: phone
     });
 
     if (error) {
@@ -102,7 +111,7 @@ async function adminAddPerson(status) {
 
     adminStatus.textContent = "Person added.";
     await loadAdminList();
-}
+});
 
 async function getSignups() {
     const { data, error } = await supabaseClient
@@ -134,11 +143,11 @@ async function loadAdminList() {
             <div>Status: ${person.status}</div>
             <div>Phone: ${person.phone || "none"}</div>
 
-            <button onclick="changeStatus('${person.id}','confirmed')">
+            <button onclick="changeStatus('${person.id}', 'confirmed')">
                 Move to Confirmed
             </button>
 
-            <button onclick="changeStatus('${person.id}','waitlist')">
+            <button onclick="changeStatus('${person.id}', 'waitlist')">
                 Move to Waitlist
             </button>
 
@@ -186,6 +195,4 @@ async function cancelPerson(id) {
     await loadAdminList();
 }
 
-if (isLoggedIn()) {
-    showAdminPanel();
-}
+checkSession();
