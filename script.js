@@ -18,17 +18,29 @@ const spotsLeft = document.getElementById("spots-left");
 
 function isSignupOpen() {
     const now = new Date();
+
     const day = now.getDay();
     const hour = now.getHours();
-    const minutes = now.getMinutes();
+    const minute = now.getMinutes();
 
-    const afterThursdayOpen =
-        day > 4 || (day === 4 && (hour > 8 || (hour === 8 && minutes >= 0)));
+    // JS days:
+    // Sunday = 0
+    // Monday = 1
+    // Tuesday = 2
+    // Wednesday = 3
+    // Thursday = 4
+    // Friday = 5
+    // Saturday = 6
 
-    const beforeTuesdayClose =
-        day < 2 || (day === 2 && hour < 18);
+    const isAfterThursdayOpen =
+        day > 4 ||
+        (day === 4 && (hour > 8 || (hour === 8 && minute >= 0)));
 
-    return afterThursdayOpen || beforeTuesdayClose;
+    const isBeforeTuesdayClose =
+        day < 2 ||
+        (day === 2 && hour < 12);
+
+    return isAfterThursdayOpen || isBeforeTuesdayClose;
 }
 
 function getMySignups() {
@@ -106,9 +118,38 @@ async function updateMyStatus() {
     let html = "";
 
     if (!isSignupOpen()) {
-        html += `<p>Signup is closed. It opens Thursday at 8:00 AM.</p>`;
+        html += `
+            <div style="
+                background:#c53030;
+                color:white;
+                padding:12px;
+                border-radius:8px;
+                margin-bottom:15px;
+                font-size:18px;
+                font-weight:bold;
+            ">
+                Signup for this week is CLOSED.<br>
+                Signup opens Thursday at 8:00 AM.
+            </div>
+        `;
+
         form.style.display = "none";
     } else {
+        html += `
+            <div style="
+                background:#2f855a;
+                color:white;
+                padding:12px;
+                border-radius:8px;
+                margin-bottom:15px;
+                font-size:18px;
+                font-weight:bold;
+            ">
+                Signup is OPEN.<br>
+                Signup closes Tuesday at 12:00 PM.
+            </div>
+        `;
+
         form.style.display = "block";
     }
 
