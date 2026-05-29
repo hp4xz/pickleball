@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickleball Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="page">
+        <div class="signup-card">
+            <h1>Admin</h1>
+
+            <div id="login-box">
+                <input type="password" id="admin-password" placeholder="Admin password">
+                <button id="login-button">Log In</button>
+            </div>
+
+            <div id="admin-panel" style="display:none;">
+                <button id="refresh-button">Refresh List</button>
+                <button id="clear-button" class="cancel">Clear All Signups</button>
+                <div id="admin-status"></div>
+            </div>
+        </div>
+
+        <div class="list-card">
+            <h2>All Active Signups</h2>
+            <div id="admin-list"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="admin.js"></script>
+</body>
+</html>
