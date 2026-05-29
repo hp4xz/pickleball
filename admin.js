@@ -3,7 +3,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 // Change this to whatever password you want.
 // This is okay for testing, but not strong security for production.
-const ADMIN_PASSWORD = "pickleball-admin";
+const ADMIN_PASSWORD = "superSecret";
 
 const supabaseClient = window.supabase.createClient(
     SUPABASE_URL,
