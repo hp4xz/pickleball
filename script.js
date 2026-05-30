@@ -6,9 +6,9 @@ const RESET_DAY = 4;
 const RESET_HOUR = 8;
 const RESET_MINUTE = 0;
 // Weekly close + shuffle settings
-const CLOSE_DAY = 6;
-const CLOSE_HOUR = 10;
-const CLOSE_MINUTE = 36;
+const CLOSE_DAY = 2;
+const CLOSE_HOUR = 12;
+const CLOSE_MINUTE = 0;
 
 const SUPABASE_URL = "https://unlnzhctvydpbtrpvoai.supabase.co";
 
