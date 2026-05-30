@@ -1,5 +1,10 @@
 const MAX_PLAYERS = 24;
-
+// Weekly reset settings
+// Sunday = 0, Monday = 1, Tuesday = 2, Wednesday = 3,
+// Thursday = 4, Friday = 5, Saturday = 6
+const RESET_DAY = 5;
+const RESET_HOUR = 10;
+const RESET_MINUTE = 15;
 const SUPABASE_URL = "https://unlnzhctvydpbtrpvoai.supabase.co";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVubG56aGN0dnlkcGJ0cnB2b2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTc0NDIsImV4cCI6MjA5NTYzMzQ0Mn0.UlZE8uslUR4VziAeW7uc8i12DZPsO8y7hSoN8YKx5CQ";
@@ -58,8 +63,14 @@ async function maybeResetForNewWeek() {
     const now = new Date();
     const day = now.getDay();
     const hour = now.getHours();
+    const minute = now.getMinutes();
 
-    if (!(day === 4 && hour >= 8)) {
+    const isResetDay = day === RESET_DAY;
+    const isAfterResetTime =
+        hour > RESET_HOUR ||
+        (hour === RESET_HOUR && minute >= RESET_MINUTE);
+
+    if (!(isResetDay && isAfterResetTime)) {
         return;
     }
 
@@ -76,11 +87,13 @@ async function maybeResetForNewWeek() {
 
     const lastReset = new Date(data.value);
 
-    const thisThursday = new Date(now);
-    thisThursday.setDate(now.getDate() - ((day + 7 - 4) % 7));
-    thisThursday.setHours(8, 0, 0, 0);
+    const thisResetTime = new Date(now);
+    thisResetTime.setDate(
+        now.getDate() - ((day + 7 - RESET_DAY) % 7)
+    );
+    thisResetTime.setHours(RESET_HOUR, RESET_MINUTE, 0, 0);
 
-    if (lastReset >= thisThursday) {
+    if (lastReset >= thisResetTime) {
         return;
     }
 
