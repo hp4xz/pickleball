@@ -30,25 +30,38 @@ const courtsContainer = document.getElementById("courts-container");
 
 function isSignupOpen() {
     const now = new Date();
-    const day = now.getDay();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
 
-    const isAfterThursdayOpen =
-        day > RESET_DAY ||
-        (day === RESET_DAY && (
-            hour > RESET_HOUR ||
-            (hour === RESET_HOUR && minute >= RESET_MINUTE)
-        ));
+    const openTime = getMostRecentWeeklyTime(
+        now,
+        RESET_DAY,
+        RESET_HOUR,
+        RESET_MINUTE
+    );
 
-    const isBeforeClose =
-        day < CLOSE_DAY ||
-        (day === CLOSE_DAY && (
-            hour < CLOSE_HOUR ||
-            (hour === CLOSE_HOUR && minute < CLOSE_MINUTE)
-        ));
+    const closeTime = getMostRecentWeeklyTime(
+        now,
+        CLOSE_DAY,
+        CLOSE_HOUR,
+        CLOSE_MINUTE
+    );
 
-    return isAfterThursdayOpen || isBeforeClose;
+    return openTime > closeTime;
+}
+
+function getMostRecentWeeklyTime(now, targetDay, targetHour, targetMinute) {
+    const result = new Date(now);
+
+    const daysSinceTarget =
+        (now.getDay() + 7 - targetDay) % 7;
+
+    result.setDate(now.getDate() - daysSinceTarget);
+    result.setHours(targetHour, targetMinute, 0, 0);
+
+    if (result > now) {
+        result.setDate(result.getDate() - 7);
+    }
+
+    return result;
 }
 function getMySignups() {
     return JSON.parse(localStorage.getItem("mySignups")) || [];
