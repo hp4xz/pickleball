@@ -4,7 +4,12 @@ const MAX_PLAYERS = 24;
 // Thursday = 4, Friday = 5, Saturday = 6
 const RESET_DAY = 5;
 const RESET_HOUR = 10;
-const RESET_MINUTE = 15;
+const RESET_MINUTE = 26;
+// Weekly close + shuffle settings
+const CLOSE_DAY = 2;
+const CLOSE_HOUR = 12;
+const CLOSE_MINUTE = 0;
+
 const SUPABASE_URL = "https://unlnzhctvydpbtrpvoai.supabase.co";
 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVubG56aGN0dnlkcGJ0cnB2b2FpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAwNTc0NDIsImV4cCI6MjA5NTYzMzQ0Mn0.UlZE8uslUR4VziAeW7uc8i12DZPsO8y7hSoN8YKx5CQ";
@@ -30,16 +35,21 @@ function isSignupOpen() {
     const minute = now.getMinutes();
 
     const isAfterThursdayOpen =
-        day > 4 ||
-        (day === 4 && (hour > 8 || (hour === 8 && minute >= 0)));
+        day > RESET_DAY ||
+        (day === RESET_DAY && (
+            hour > RESET_HOUR ||
+            (hour === RESET_HOUR && minute >= RESET_MINUTE)
+        ));
 
-    const isBeforeTuesdayClose =
-        day < 2 ||
-        (day === 2 && hour < 12);
+    const isBeforeClose =
+        day < CLOSE_DAY ||
+        (day === CLOSE_DAY && (
+            hour < CLOSE_HOUR ||
+            (hour === CLOSE_HOUR && minute < CLOSE_MINUTE)
+        ));
 
-    return isAfterThursdayOpen || isBeforeTuesdayClose;
+    return isAfterThursdayOpen || isBeforeClose;
 }
-
 function getMySignups() {
     return JSON.parse(localStorage.getItem("mySignups")) || [];
 }
@@ -99,7 +109,50 @@ async function maybeResetForNewWeek() {
 
     await supabaseClient.rpc("reset_for_new_week");
 }
+async function maybeShuffleCourts() {
+    const now = new Date();
+    const day = now.getDay();
+    const hour = now.getHours();
+    const minute = now.getMinutes();
 
+    const isCloseDay = day === CLOSE_DAY;
+    const isAfterCloseTime =
+        hour > CLOSE_HOUR ||
+        (hour === CLOSE_HOUR && minute >= CLOSE_MINUTE);
+
+    if (!(isCloseDay && isAfterCloseTime)) {
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("site_settings")
+        .select("value")
+        .eq("key", "last_shuffle")
+        .single();
+
+    if (error || !data) {
+        console.error(error);
+        return;
+    }
+
+    const lastShuffle = new Date(data.value);
+
+    const thisCloseTime = new Date(now);
+    thisCloseTime.setDate(
+        now.getDate() - ((day + 7 - CLOSE_DAY) % 7)
+    );
+    thisCloseTime.setHours(CLOSE_HOUR, CLOSE_MINUTE, 0, 0);
+
+    if (lastShuffle >= thisCloseTime) {
+        return;
+    }
+
+    const { error: shuffleError } = await supabaseClient.rpc("auto_shuffle_courts");
+
+    if (shuffleError) {
+        console.error(shuffleError);
+    }
+}
 async function getSignups() {
     const { data, error } = await supabaseClient
         .from("signups")
@@ -343,6 +396,7 @@ async function cancelSignup(id) {
 
 async function refreshPage() {
     await maybeResetForNewWeek();
+    await maybeShuffleCourts();
     await renderLists();
     await renderCourts();
     await updateMyStatus();
