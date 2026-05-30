@@ -4,7 +4,7 @@ const MAX_PLAYERS = 24;
 // Thursday = 4, Friday = 5, Saturday = 6
 const RESET_DAY = 5;
 const RESET_HOUR = 10;
-const RESET_MINUTE = 26;
+const RESET_MINUTE = 30;
 // Weekly close + shuffle settings
 const CLOSE_DAY = 2;
 const CLOSE_HOUR = 12;
