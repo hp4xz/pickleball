@@ -20,6 +20,7 @@ const supabaseClient = window.supabase.createClient(
     SUPABASE_ANON_KEY
 );
 
+
 const form = document.getElementById("signup-form");
 const statusDiv = document.getElementById("status");
 
@@ -63,6 +64,7 @@ function getMostRecentWeeklyTime(now, targetDay, targetHour, targetMinute) {
 
     return result;
 }
+
 function getMySignups() {
     return JSON.parse(localStorage.getItem("mySignups")) || [];
 }
@@ -122,7 +124,29 @@ async function maybeResetForNewWeek() {
 
     await supabaseClient.rpc("reset_for_new_week");
 }
+
+async function isAutoShuffleEnabled() {
+    const { data, error } = await supabaseClient
+        .from("site_settings")
+        .select("value")
+        .eq("key", "auto_shuffle_enabled")
+        .single();
+
+    if (error || !data) {
+        console.error(error);
+        return true;
+    }
+
+    return data.value === "true";
+}
+
 async function maybeShuffleCourts() {
+    const autoShuffleEnabled = await isAutoShuffleEnabled();
+
+    if (!autoShuffleEnabled) {
+        return;
+    }
+
     const now = new Date();
     const day = now.getDay();
     const hour = now.getHours();
@@ -166,6 +190,7 @@ async function maybeShuffleCourts() {
         console.error(shuffleError);
     }
 }
+
 async function getSignups() {
     const { data, error } = await supabaseClient
         .from("signups")

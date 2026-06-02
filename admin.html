@@ -65,12 +65,37 @@
 
                 <hr>
 
+                <h2>Settings</h2>
+
+                <label class="toggle-row">
+                    <input
+                        type="checkbox"
+                        id="auto-shuffle-toggle"
+                    >
+                    <span>Automatic Tuesday shuffle</span>
+                </label>
+
+                <p class="admin-help-text">
+                    When this is on, the public page can automatically shuffle courts after Tuesday at 12:00 PM.
+                    When this is off, only the admin can shuffle or publish manual court assignments.
+                </p>
+
+                <hr>
+
                 <button id="refresh-button">
                     Refresh List
                 </button>
 
                 <button id="shuffle-button">
-                    Shuffle Courts
+                    Random Shuffle and Publish
+                </button>
+
+                <button id="publish-manual-courts-button">
+                    Publish Court Assignments
+                </button>
+
+                <button id="clear-manual-courts-button">
+                    Clear Draft Assignments
                 </button>
                 
                 <button
@@ -94,6 +119,32 @@
 
         </div>
 
+    </div>
+
+    <div id="admin-courts-view-section" class="courts-section" style="display:none;">
+        <h2>Currently Published Court Assignments</h2>
+        <p class="court-note">
+            This is what players currently see on the public page.
+        </p>
+        <div id="published-courts-container" class="courts-grid"></div>
+    </div>
+
+    <div id="manual-courts-section" class="courts-section" style="display:none;">
+        <h2>Manual Court Assignment Draft</h2>
+        <p class="court-note">
+            Changing these dropdowns only changes the admin draft below. The public page will not update until you click
+            <strong>Publish Court Assignments</strong>.
+        </p>
+
+        <div id="manual-validation-message"></div>
+
+        <div id="manual-courts-container" class="manual-courts-grid"></div>
+
+        <h2>Draft Preview</h2>
+        <p class="court-note">
+            This preview is not public yet.
+        </p>
+        <div id="draft-courts-container" class="courts-grid"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
