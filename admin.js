@@ -419,7 +419,39 @@ function updateManualSelectOptions() {
         });
     });
 }
-buildSelectedPlayersFromAssignments
+function buildSelectedPlayersFromAssignments(confirmedPlayers, assignments) {
+    const result = {};
+    const usedPlayerIds = new Set();
+
+    for (let court = 1; court <= 6; court++) {
+        for (let pair = 1; pair <= 2; pair++) {
+            const pairAssignments = assignments.filter(assignment =>
+                assignment.court_number === court &&
+                assignment.pair_number === pair
+            );
+
+            for (let slot = 1; slot <= 2; slot++) {
+                const assignment = pairAssignments[slot - 1];
+
+                if (!assignment) {
+                    continue;
+                }
+
+                const matchingPlayer = confirmedPlayers.find(player =>
+                    player.name === assignment.player_name &&
+                    !usedPlayerIds.has(player.id)
+                );
+
+                if (matchingPlayer) {
+                    result[`${court}-${pair}-${slot}`] = matchingPlayer.id;
+                    usedPlayerIds.add(matchingPlayer.id);
+                }
+            }
+        }
+    }
+
+    return result;
+}
 
 function getDraftAssignmentsFromForm() {
     const selects = Array.from(document.querySelectorAll(".manual-player-select"));
