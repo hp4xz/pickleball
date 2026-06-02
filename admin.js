@@ -275,25 +275,76 @@ function renderAdminSignupList(signups) {
         return;
     }
 
-    adminList.innerHTML = signups.map((person, index) => `
-        <div style="border:1px solid #ccc;padding:12px;margin-bottom:12px;border-radius:8px;">
-            <strong>${index + 1}. ${escapeHtml(person.name)}</strong>
-            <div>Status: ${escapeHtml(person.status)}</div>
-            <div>Phone: ${escapeHtml(person.phone || "none")}</div>
+    const confirmed = signups.filter(person => person.status === "confirmed");
+    const waitlist = signups.filter(person => person.status === "waitlist");
 
-            <button onclick="changeStatus('${person.id}', 'confirmed')">
-                Move to Confirmed
-            </button>
-
-            <button onclick="changeStatus('${person.id}', 'waitlist')">
-                Move to Waitlist
-            </button>
-
-            <button class="cancel" onclick="cancelPerson('${person.id}')">
-                Remove
-            </button>
+    adminList.innerHTML = `
+        <div class="admin-signup-section">
+            <h3>Confirmed Players (${confirmed.length}/24)</h3>
+            ${renderCompactSignupRows(confirmed, 1)}
         </div>
-    `).join("");
+
+        <div class="admin-signup-section">
+            <h3>Waitlist (${waitlist.length})</h3>
+            ${renderCompactSignupRows(waitlist, 25)}
+        </div>
+    `;
+}
+
+function renderCompactSignupRows(players, startingNumber) {
+    if (players.length === 0) {
+        return `<p class="empty-admin-list">None</p>`;
+    }
+
+    return `
+        <div class="admin-compact-list">
+            ${players.map((person, index) => {
+                const displayNumber = startingNumber + index;
+
+                const statusButton = person.status === "confirmed"
+                    ? `
+                        <button
+                            class="small-admin-button"
+                            onclick="changeStatus('${person.id}', 'waitlist')"
+                        >
+                            Move to Waitlist
+                        </button>
+                    `
+                    : `
+                        <button
+                            class="small-admin-button"
+                            onclick="changeStatus('${person.id}', 'confirmed')"
+                        >
+                            Move to Confirmed
+                        </button>
+                    `;
+
+                return `
+                    <div class="admin-compact-row">
+                        <div class="admin-player-number">
+                            ${displayNumber}.
+                        </div>
+
+                        <div class="admin-player-info">
+                            <strong>${escapeHtml(person.name)}</strong>
+                            <span>${escapeHtml(person.phone || "no phone")}</span>
+                        </div>
+
+                        <div class="admin-player-actions">
+                            ${statusButton}
+
+                            <button
+                                class="small-admin-button small-cancel-button"
+                                onclick="cancelPerson('${person.id}')"
+                            >
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("")}
+        </div>
+    `;
 }
 
 function renderManualCourtBuilder(signups, assignments) {
