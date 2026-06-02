@@ -30,7 +30,6 @@ const manualCourtsSection = document.getElementById("manual-courts-section");
 
 const publishedCourtsContainer = document.getElementById("published-courts-container");
 const manualCourtsContainer = document.getElementById("manual-courts-container");
-const draftCourtsContainer = document.getElementById("draft-courts-container");
 const manualValidationMessage = document.getElementById("manual-validation-message");
 
 const adminList = document.getElementById("admin-list");
@@ -402,8 +401,6 @@ function getDraftAssignmentsFromForm() {
 function updateDraftPreviewAndValidation() {
     const draftAssignments = getDraftAssignmentsFromForm();
     const validation = validateDraftAssignments(draftAssignments);
-
-    renderCourtVisual(draftCourtsContainer, draftAssignments);
 
     if (validation.valid) {
         manualValidationMessage.className = "manual-validation good";
