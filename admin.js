@@ -350,6 +350,11 @@ function renderCompactSignupRows(players, startingNumber) {
 function renderManualCourtBuilder(signups, assignments) {
     const confirmedPlayers = signups.filter(person => person.status === "confirmed");
 
+    const selectedPlayersByPublishedAssignment = buildSelectedPlayersFromAssignments(
+        confirmedPlayers,
+        assignments
+    );
+
     manualCourtsContainer.innerHTML = "";
 
     for (let court = 1; court <= 6; court++) {
@@ -362,6 +367,9 @@ function renderManualCourtBuilder(signups, assignments) {
             html += `<div class="manual-pair-title">Pair ${pair}</div>`;
 
             for (let slot = 1; slot <= 2; slot++) {
+                const selectedId =
+                    selectedPlayersByPublishedAssignment[`${court}-${pair}-${slot}`] || "";
+
                 html += `
                     <select
                         class="manual-player-select"
@@ -371,7 +379,10 @@ function renderManualCourtBuilder(signups, assignments) {
                     >
                         <option value="">Empty</option>
                         ${confirmedPlayers.map(player => `
-                            <option value="${escapeAttribute(player.id)}">
+                            <option
+                                value="${escapeAttribute(player.id)}"
+                                ${player.id === selectedId ? "selected" : ""}
+                            >
                                 ${escapeHtml(player.name)}
                             </option>
                         `).join("")}
