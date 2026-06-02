@@ -350,11 +350,6 @@ function renderCompactSignupRows(players, startingNumber) {
 function renderManualCourtBuilder(signups, assignments) {
     const confirmedPlayers = signups.filter(person => person.status === "confirmed");
 
-    const selectedPlayersByPublishedAssignment = buildSelectedPlayersFromAssignments(
-        confirmedPlayers,
-        assignments
-    );
-
     manualCourtsContainer.innerHTML = "";
 
     for (let court = 1; court <= 6; court++) {
@@ -367,9 +362,6 @@ function renderManualCourtBuilder(signups, assignments) {
             html += `<div class="manual-pair-title">Pair ${pair}</div>`;
 
             for (let slot = 1; slot <= 2; slot++) {
-                const selectedId =
-                    selectedPlayersByPublishedAssignment[`${court}-${pair}-${slot}`] || "";
-
                 html += `
                     <select
                         class="manual-player-select"
@@ -379,7 +371,7 @@ function renderManualCourtBuilder(signups, assignments) {
                     >
                         <option value="">Empty</option>
                         ${confirmedPlayers.map(player => `
-                            <option value="${escapeAttribute(player.id)}" ${player.id === selectedId ? "selected" : ""}>
+                            <option value="${escapeAttribute(player.id)}">
                                 ${escapeHtml(player.name)}
                             </option>
                         `).join("")}
@@ -393,43 +385,41 @@ function renderManualCourtBuilder(signups, assignments) {
     }
 
     document.querySelectorAll(".manual-player-select").forEach(select => {
-        select.addEventListener("change", updateDraftPreviewAndValidation);
+        select.addEventListener("change", () => {
+            updateManualSelectOptions();
+            updateDraftPreviewAndValidation();
+        });
+    });
+
+    updateManualSelectOptions();
+}
+function updateManualSelectOptions() {
+    const selects = Array.from(document.querySelectorAll(".manual-player-select"));
+
+    const selectedPlayerIds = selects
+        .map(select => select.value)
+        .filter(value => value !== "");
+
+    selects.forEach(select => {
+        const currentValue = select.value;
+
+        Array.from(select.options).forEach(option => {
+            if (option.value === "") {
+                option.hidden = false;
+                option.disabled = false;
+                return;
+            }
+
+            const selectedSomewhereElse =
+                selectedPlayerIds.includes(option.value) &&
+                option.value !== currentValue;
+
+            option.hidden = selectedSomewhereElse;
+            option.disabled = selectedSomewhereElse;
+        });
     });
 }
-
-function buildSelectedPlayersFromAssignments(confirmedPlayers, assignments) {
-    const result = {};
-    const usedPlayerIds = new Set();
-
-    for (let court = 1; court <= 6; court++) {
-        for (let pair = 1; pair <= 2; pair++) {
-            const pairAssignments = assignments.filter(assignment =>
-                assignment.court_number === court &&
-                assignment.pair_number === pair
-            );
-
-            for (let slot = 1; slot <= 2; slot++) {
-                const assignment = pairAssignments[slot - 1];
-
-                if (!assignment) {
-                    continue;
-                }
-
-                const matchingPlayer = confirmedPlayers.find(player =>
-                    player.name === assignment.player_name &&
-                    !usedPlayerIds.has(player.id)
-                );
-
-                if (matchingPlayer) {
-                    result[`${court}-${pair}-${slot}`] = matchingPlayer.id;
-                    usedPlayerIds.add(matchingPlayer.id);
-                }
-            }
-        }
-    }
-
-    return result;
-}
+buildSelectedPlayersFromAssignments
 
 function getDraftAssignmentsFromForm() {
     const selects = Array.from(document.querySelectorAll(".manual-player-select"));
@@ -550,7 +540,9 @@ function clearDraftAssignments() {
         select.value = "";
     });
 
+    updateManualSelectOptions();
     updateDraftPreviewAndValidation();
+
     adminStatus.textContent = "Draft assignments cleared. Public court assignments were not changed.";
 }
 
