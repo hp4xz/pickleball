@@ -14,7 +14,7 @@ const loginButton = document.getElementById("login-button");
 const logoutButton = document.getElementById("logout-button");
 
 const refreshButton = document.getElementById("refresh-button");
-const newWeekButton = document.getElementById("new-week-button");
+//const newWeekButton = document.getElementById("new-week-button");
 
 const addNameInput = document.getElementById("add-name");
 const addPhoneInput = document.getElementById("add-phone");
