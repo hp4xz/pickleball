@@ -325,7 +325,7 @@ async function updateMyStatus() {
                 font-weight:bold;
             ">
                 Signup for this week is CLOSED.<br>
-                Signup opens Thursday at 8:00 AM.
+                Signup opens Tuesday at 8:00 PM.
             </div>
         `;
 
