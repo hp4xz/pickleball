@@ -139,24 +139,24 @@ logoutButton.addEventListener("click", async () => {
 
 refreshButton.addEventListener("click", loadAdminList);
 
-newWeekButton.addEventListener("click", async () => {
-    const confirmed = confirm("Start a new week? This clears all current signups and court assignments.");
+// newWeekButton.addEventListener("click", async () => {
+//     const confirmed = confirm("Start a new week? This clears all current signups and court assignments.");
 
-    if (!confirmed) {
-        return;
-    }
+//     if (!confirmed) {
+//         return;
+//     }
 
-    const { error } = await supabaseClient.rpc("admin_start_new_week");
+//     const { error } = await supabaseClient.rpc("admin_start_new_week");
 
-    if (error) {
-        console.error(error);
-        adminStatus.textContent = "Error starting new week.";
-        return;
-    }
+//     if (error) {
+//         console.error(error);
+//         adminStatus.textContent = "Error starting new week.";
+//         return;
+//     }
 
-    adminStatus.textContent = "New week started.";
-    await loadAdminList();
-});
+//     adminStatus.textContent = "New week started.";
+//     await loadAdminList();
+// });
 
 addPlayerButton.addEventListener("click", async () => {
     const name = addNameInput.value.trim();
