@@ -380,6 +380,32 @@ form.addEventListener("submit", async (e) => {
     }
 
     const signups = await getSignups();
+
+    const normalizedName = name.toLowerCase();
+
+    const existingIndex = signups.findIndex(person =>
+        person.name.trim().toLowerCase() === normalizedName
+    );
+
+    if (existingIndex !== -1) {
+        const existingPerson = signups[existingIndex];
+
+        const sameStatusList = signups.filter(person =>
+            person.status === existingPerson.status
+        );
+
+        const position =
+            sameStatusList.findIndex(person => person.id === existingPerson.id) + 1;
+
+        const statusText =
+            existingPerson.status === "confirmed" ? "confirmed list" : "waitlist";
+
+        statusDiv.textContent =
+            `Player already signed up. ${existingPerson.name} is #${position} on the ${statusText}.`;
+
+        return;
+    }
+
     const confirmedCount = signups.filter(person => person.status === "confirmed").length;
 
     const newStatus = confirmedCount < MAX_PLAYERS ? "confirmed" : "waitlist";
