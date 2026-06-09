@@ -84,46 +84,46 @@ function removeMySignup(id) {
     localStorage.setItem("mySignups", JSON.stringify(mySignups));
 }
 
-async function maybeResetForNewWeek() {
-    const now = new Date();
-    const day = now.getDay();
-    const hour = now.getHours();
-    const minute = now.getMinutes();
+// async function maybeResetForNewWeek() {
+//     const now = new Date();
+//     const day = now.getDay();
+//     const hour = now.getHours();
+//     const minute = now.getMinutes();
 
-    const isResetDay = day === RESET_DAY;
-    const isAfterResetTime =
-        hour > RESET_HOUR ||
-        (hour === RESET_HOUR && minute >= RESET_MINUTE);
+//     const isResetDay = day === RESET_DAY;
+//     const isAfterResetTime =
+//         hour > RESET_HOUR ||
+//         (hour === RESET_HOUR && minute >= RESET_MINUTE);
 
-    if (!(isResetDay && isAfterResetTime)) {
-        return;
-    }
+//     if (!(isResetDay && isAfterResetTime)) {
+//         return;
+//     }
 
-    const { data, error } = await supabaseClient
-        .from("site_settings")
-        .select("value")
-        .eq("key", "last_reset")
-        .single();
+//     const { data, error } = await supabaseClient
+//         .from("site_settings")
+//         .select("value")
+//         .eq("key", "last_reset")
+//         .single();
 
-    if (error || !data) {
-        console.error(error);
-        return;
-    }
+//     if (error || !data) {
+//         console.error(error);
+//         return;
+//     }
 
-    const lastReset = new Date(data.value);
+//     const lastReset = new Date(data.value);
 
-    const thisResetTime = new Date(now);
-    thisResetTime.setDate(
-        now.getDate() - ((day + 7 - RESET_DAY) % 7)
-    );
-    thisResetTime.setHours(RESET_HOUR, RESET_MINUTE, 0, 0);
+//     const thisResetTime = new Date(now);
+//     thisResetTime.setDate(
+//         now.getDate() - ((day + 7 - RESET_DAY) % 7)
+//     );
+//     thisResetTime.setHours(RESET_HOUR, RESET_MINUTE, 0, 0);
 
-    if (lastReset >= thisResetTime) {
-        return;
-    }
+//     if (lastReset >= thisResetTime) {
+//         return;
+//     }
 
-    await supabaseClient.rpc("reset_for_new_week");
-}
+//     await supabaseClient.rpc("reset_for_new_week");
+// }
 
 async function isAutoShuffleEnabled() {
     const { data, error } = await supabaseClient
@@ -501,7 +501,7 @@ async function cancelSignup(id) {
 }
 
 async function refreshPage() {
-    await maybeResetForNewWeek();
+    //await maybeResetForNewWeek();
     await maybeShuffleCourts();
     await renderLists();
     await renderCourts();

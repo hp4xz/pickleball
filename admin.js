@@ -24,7 +24,11 @@ const shuffleButton = document.getElementById("shuffle-button");
 const publishManualCourtsButton = document.getElementById("publish-manual-courts-button");
 const clearManualCourtsButton = document.getElementById("clear-manual-courts-button");
 const autoShuffleToggle = document.getElementById("auto-shuffle-toggle");
+const resetWeekButton =
+    document.getElementById("reset-week-button");
 
+const restoreLastWeekButton =
+    document.getElementById("restore-last-week-button");
 const adminCourtsViewSection = document.getElementById("admin-courts-view-section");
 const manualCourtsSection = document.getElementById("manual-courts-section");
 
@@ -43,7 +47,8 @@ shuffleButton.addEventListener("click", shuffleCourts);
 publishManualCourtsButton.addEventListener("click", publishManualCourtAssignments);
 clearManualCourtsButton.addEventListener("click", clearDraftAssignments);
 autoShuffleToggle.addEventListener("change", saveAutoShuffleSetting);
-
+resetWeekButton.addEventListener("click", resetWeek);
+restoreLastWeekButton.addEventListener("click", restoreLastWeek);
 async function shuffleCourts() {
     const signups = await getSignups();
 
@@ -687,5 +692,72 @@ function escapeHtml(value) {
 function escapeAttribute(value) {
     return escapeHtml(value);
 }
+async function resetWeek() {
+    const confirmed = confirm(
+        "Are you sure you want to reset the week?\n\n" +
+        "This will clear the active signup list and published court assignments. " +
+        "A backup will be saved so you can undo the reset."
+    );
 
+    if (!confirmed) {
+        return;
+    }
+
+    resetWeekButton.disabled = true;
+    restoreLastWeekButton.disabled = true;
+
+    const { data, error } = await supabaseClient.rpc(
+        "admin_reset_week"
+    );
+
+    resetWeekButton.disabled = false;
+    restoreLastWeekButton.disabled = false;
+
+    if (error) {
+        console.error(error);
+        adminStatus.textContent =
+            error.message || "Error resetting the week.";
+        return;
+    }
+
+    adminStatus.textContent =
+        `Week reset successfully. Backup ${data} was saved.`;
+
+    await loadAdminList();
+}
+
+
+async function restoreLastWeek() {
+    const confirmed = confirm(
+        "Are you sure you want to load the last saved week?\n\n" +
+        "Any players who signed up after the reset will be removed from the active list. " +
+        "The saved roster and published court assignments will be restored."
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    resetWeekButton.disabled = true;
+    restoreLastWeekButton.disabled = true;
+
+    const { error } = await supabaseClient.rpc(
+        "admin_restore_last_week"
+    );
+
+    resetWeekButton.disabled = false;
+    restoreLastWeekButton.disabled = false;
+
+    if (error) {
+        console.error(error);
+        adminStatus.textContent =
+            error.message || "Error restoring the previous week.";
+        return;
+    }
+
+    adminStatus.textContent =
+        "The previous roster and published courts were restored.";
+
+    await loadAdminList();
+}
 checkSession();
