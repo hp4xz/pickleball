@@ -441,3 +441,20 @@ button:disabled {
         padding: 7px 9px;
     }
 }
+.admin-link {
+    display: block;
+    width: fit-content;
+    margin: 25px auto 5px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.admin-link:hover {
+    background: #e8e8e8;
+    color: #222;
+}
