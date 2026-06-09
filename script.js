@@ -379,57 +379,99 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    const signups = await getSignups();
+    // const signups = await getSignups();
 
-    const normalizedName = name.toLowerCase();
+    // const normalizedName = name.toLowerCase();
 
-    const existingIndex = signups.findIndex(person =>
-        person.name.trim().toLowerCase() === normalizedName
+    // const existingIndex = signups.findIndex(person =>
+    //     person.name.trim().toLowerCase() === normalizedName
+    // );
+
+    // if (existingIndex !== -1) {
+    //     const existingPerson = signups[existingIndex];
+
+    //     const sameStatusList = signups.filter(person =>
+    //         person.status === existingPerson.status
+    //     );
+
+    //     const position =
+    //         sameStatusList.findIndex(person => person.id === existingPerson.id) + 1;
+
+    //     const statusText =
+    //         existingPerson.status === "confirmed" ? "confirmed list" : "waitlist";
+
+    //     statusDiv.textContent =
+    //         `Player already signed up. ${existingPerson.name} is #${position} on the ${statusText}.`;
+
+    //     return;
+    // }
+
+    // const confirmedCount = signups.filter(person => person.status === "confirmed").length;
+
+    // const newStatus = confirmedCount < MAX_PLAYERS ? "confirmed" : "waitlist";
+
+    // const { data, error } = await supabaseClient
+    //     .from("signups")
+    //     .insert([
+    //         {
+    //             name: name,
+    //             phone: phone || null,
+    //             status: newStatus
+    //         }
+    //     ])
+    //     .select("id, signup_token")
+    //     .single();
+
+    // if (error) {
+    //     console.error(error);
+    //     statusDiv.textContent = "Error signing up.";
+    //     return;
+    // }
+
+    // saveMySignup(data.id, data.signup_token);
+const signups = await getSignups();
+
+const normalizedName = name.toLowerCase();
+
+const existingIndex = signups.findIndex(person =>
+    person.name.trim().toLowerCase() === normalizedName
+);
+
+if (existingIndex !== -1) {
+    const existingPerson = signups[existingIndex];
+
+    const sameStatusList = signups.filter(person =>
+        person.status === existingPerson.status
     );
 
-    if (existingIndex !== -1) {
-        const existingPerson = signups[existingIndex];
+    const position =
+        sameStatusList.findIndex(person => person.id === existingPerson.id) + 1;
 
-        const sameStatusList = signups.filter(person =>
-            person.status === existingPerson.status
-        );
+    const statusText =
+        existingPerson.status === "confirmed"
+            ? "confirmed list"
+            : "waitlist";
 
-        const position =
-            sameStatusList.findIndex(person => person.id === existingPerson.id) + 1;
+    statusDiv.textContent =
+        `Player already signed up. ${existingPerson.name} is #${position} on the ${statusText}.`;
 
-        const statusText =
-            existingPerson.status === "confirmed" ? "confirmed list" : "waitlist";
+    return;
+}
 
-        statusDiv.textContent =
-            `Player already signed up. ${existingPerson.name} is #${position} on the ${statusText}.`;
+const { data, error } = await supabaseClient
+    .rpc("signup_player", {
+        p_name: name,
+        p_phone: phone
+    })
+    .single();
 
-        return;
-    }
+if (error) {
+    console.error(error);
+    statusDiv.textContent = "Error signing up.";
+    return;
+}
 
-    const confirmedCount = signups.filter(person => person.status === "confirmed").length;
-
-    const newStatus = confirmedCount < MAX_PLAYERS ? "confirmed" : "waitlist";
-
-    const { data, error } = await supabaseClient
-        .from("signups")
-        .insert([
-            {
-                name: name,
-                phone: phone || null,
-                status: newStatus
-            }
-        ])
-        .select("id, signup_token")
-        .single();
-
-    if (error) {
-        console.error(error);
-        statusDiv.textContent = "Error signing up.";
-        return;
-    }
-
-    saveMySignup(data.id, data.signup_token);
-
+saveMySignup(data.signup_id, data.signup_token);
     form.reset();
     await refreshPage();
 });
