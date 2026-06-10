@@ -29,26 +29,44 @@ const waitlistList = document.getElementById("waitlist-list");
 const spotsLeft = document.getElementById("spots-left");
 const courtsContainer = document.getElementById("courts-container");
 
-function isSignupOpen() {
-    const now = new Date();
+// function isSignupOpen() {
+//     const now = new Date();
 
-    const openTime = getMostRecentWeeklyTime(
-        now,
-        RESET_DAY,
-        RESET_HOUR,
-        RESET_MINUTE
-    );
+//     const openTime = getMostRecentWeeklyTime(
+//         now,
+//         RESET_DAY,
+//         RESET_HOUR,
+//         RESET_MINUTE
+//     );
 
-    const closeTime = getMostRecentWeeklyTime(
-        now,
-        CLOSE_DAY,
-        CLOSE_HOUR,
-        CLOSE_MINUTE
-    );
+//     const closeTime = getMostRecentWeeklyTime(
+//         now,
+//         CLOSE_DAY,
+//         CLOSE_HOUR,
+//         CLOSE_MINUTE
+//     );
 
-    return openTime > closeTime;
+//     return openTime > closeTime;
+// }
+let signupOpen = false;
+
+async function loadSignupOpenSetting() {
+    await supabaseClient.rpc("close_signup_if_due");
+
+    const { data, error } = await supabaseClient
+        .from("site_settings")
+        .select("value")
+        .eq("key", "signup_open")
+        .single();
+
+    if (error || !data) {
+        console.error(error);
+        signupOpen = false;
+        return;
+    }
+
+    signupOpen = data.value === "true";
 }
-
 function getMostRecentWeeklyTime(now, targetDay, targetHour, targetMinute) {
     const result = new Date(now);
 
@@ -313,7 +331,7 @@ async function updateMyStatus() {
 
     let html = "";
 
-    if (!isSignupOpen()) {
+    if (!signupOpen()) {
         html += `
             <div style="
                 background:#c53030;
@@ -365,8 +383,8 @@ async function updateMyStatus() {
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!isSignupOpen()) {
-        statusDiv.textContent = "Signup is closed. It opens Thursday at 8:00 AM.";
+    if (!signupOpen()) {
+        statusDiv.textContent = "Signup is closed.";
         return;
     }
 
@@ -499,12 +517,18 @@ async function cancelSignup(id) {
     await refreshPage();
 }
 
+// async function refreshPage() {
+//     //await maybeResetForNewWeek();
+//     await maybeShuffleCourts();
+//     await renderLists();
+//     await renderCourts();
+//     await updateMyStatus();
+// }
 async function refreshPage() {
-    //await maybeResetForNewWeek();
+    await loadSignupOpenSetting();
     await maybeShuffleCourts();
     await renderLists();
     await renderCourts();
     await updateMyStatus();
 }
-
 refreshPage();
