@@ -331,7 +331,7 @@ async function updateMyStatus() {
 
     let html = "";
 
-    if (!signupOpen()) {
+    if (!signupOpen) {
         html += `
             <div style="
                 background:#c53030;
@@ -383,7 +383,7 @@ async function updateMyStatus() {
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    if (!signupOpen()) {
+    if (!signupOpen) {
         statusDiv.textContent = "Signup is closed.";
         return;
     }
