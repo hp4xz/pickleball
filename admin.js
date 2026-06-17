@@ -71,7 +71,7 @@ async function shuffleCourts() {
     for (let i = 0; i < players.length; i++) {
         rows.push({
             court_number: Math.floor(i / 4) + 1,
-            pair_number: Math.floor((i % 4) / 2) + 1,
+            pair_number: 1,
             player_name: players[i]
         });
     }
@@ -368,32 +368,27 @@ function renderManualCourtBuilder(signups, assignments) {
 
         let html = `<h3>Court ${court}</h3>`;
 
-        for (let pair = 1; pair <= 2; pair++) {
-            html += `<div class="manual-pair-title">Pair ${pair}</div>`;
+        for (let slot = 1; slot <= 4; slot++) {
+            const selectedId =
+                selectedPlayersByPublishedAssignment[`${court}-${slot}`] || "";
 
-            for (let slot = 1; slot <= 2; slot++) {
-                const selectedId =
-                    selectedPlayersByPublishedAssignment[`${court}-${pair}-${slot}`] || "";
-
-                html += `
-                    <select
-                        class="manual-player-select"
-                        data-court="${court}"
-                        data-pair="${pair}"
-                        data-slot="${slot}"
-                    >
-                        <option value="">Empty</option>
-                        ${confirmedPlayers.map(player => `
-                            <option
-                                value="${escapeAttribute(player.id)}"
-                                ${player.id === selectedId ? "selected" : ""}
-                            >
-                                ${escapeHtml(player.name)}
-                            </option>
-                        `).join("")}
-                    </select>
-                `;
-            }
+            html += `
+                <select
+                    class="manual-player-select"
+                    data-court="${court}"
+                    data-slot="${slot}"
+                >
+                    <option value="">Empty</option>
+                    ${confirmedPlayers.map(player => `
+                        <option
+                            value="${escapeAttribute(player.id)}"
+                            ${player.id === selectedId ? "selected" : ""}
+                        >
+                            ${escapeHtml(player.name)}
+                        </option>
+                    `).join("")}
+                </select>
+            `;
         }
 
         courtCard.innerHTML = html;
@@ -440,28 +435,25 @@ function buildSelectedPlayersFromAssignments(confirmedPlayers, assignments) {
     const usedPlayerIds = new Set();
 
     for (let court = 1; court <= 6; court++) {
-        for (let pair = 1; pair <= 2; pair++) {
-            const pairAssignments = assignments.filter(assignment =>
-                assignment.court_number === court &&
-                assignment.pair_number === pair
+        const courtAssignments = assignments.filter(assignment =>
+            assignment.court_number === court
+        );
+
+        for (let slot = 1; slot <= 4; slot++) {
+            const assignment = courtAssignments[slot - 1];
+
+            if (!assignment) {
+                continue;
+            }
+
+            const matchingPlayer = confirmedPlayers.find(player =>
+                player.name === assignment.player_name &&
+                !usedPlayerIds.has(player.id)
             );
 
-            for (let slot = 1; slot <= 2; slot++) {
-                const assignment = pairAssignments[slot - 1];
-
-                if (!assignment) {
-                    continue;
-                }
-
-                const matchingPlayer = confirmedPlayers.find(player =>
-                    player.name === assignment.player_name &&
-                    !usedPlayerIds.has(player.id)
-                );
-
-                if (matchingPlayer) {
-                    result[`${court}-${pair}-${slot}`] = matchingPlayer.id;
-                    usedPlayerIds.add(matchingPlayer.id);
-                }
+            if (matchingPlayer) {
+                result[`${court}-${slot}`] = matchingPlayer.id;
+                usedPlayerIds.add(matchingPlayer.id);
             }
         }
     }
@@ -479,7 +471,7 @@ function getDraftAssignmentsFromForm() {
 
             return {
                 court_number: Number(select.dataset.court),
-                pair_number: Number(select.dataset.pair),
+                pair_number: 1,
                 slot_number: Number(select.dataset.slot),
                 player_id: select.value,
                 player_name: player ? player.name : "Unknown player"
@@ -509,7 +501,6 @@ function validateDraftAssignments(assignments) {
 
     const playerIdCounts = {};
     const courtCounts = {};
-    const pairCounts = {};
 
     assignments.forEach(assignment => {
         playerIdCounts[assignment.player_id] =
@@ -517,9 +508,6 @@ function validateDraftAssignments(assignments) {
 
         courtCounts[assignment.court_number] =
             (courtCounts[assignment.court_number] || 0) + 1;
-
-        const pairKey = `${assignment.court_number}-${assignment.pair_number}`;
-        pairCounts[pairKey] = (pairCounts[pairKey] || 0) + 1;
     });
 
     Object.keys(playerIdCounts).forEach(playerId => {
@@ -534,13 +522,6 @@ function validateDraftAssignments(assignments) {
             messages.push(`Court ${court} has more than 4 players assigned. Remove one before publishing.`);
         }
     }
-
-    Object.keys(pairCounts).forEach(pairKey => {
-        if (pairCounts[pairKey] > 2) {
-            const [court, pair] = pairKey.split("-");
-            messages.push(`Court ${court}, Pair ${pair} has more than 2 players. Remove one before publishing.`);
-        }
-    });
 
     return {
         valid: messages.length === 0,
@@ -602,14 +583,6 @@ function renderCourtVisual(container, assignments) {
             player => player.court_number === court
         );
 
-        const pairOne = courtPlayers.filter(
-            player => player.pair_number === 1
-        );
-
-        const pairTwo = courtPlayers.filter(
-            player => player.pair_number === 2
-        );
-
         const courtCard = document.createElement("div");
         courtCard.className = "court-card";
 
@@ -622,18 +595,10 @@ function renderCourtVisual(container, assignments) {
                 ${courtPlayers.length === 0 ? `
                     <div class="empty-court">No players assigned</div>
                 ` : `
-                    <div class="pair-box">
-                        <div class="pair-title">Pair 1</div>
-                        ${pairOne.length > 0 ? pairOne.map(player => `
+                    <div class="court-player-box">
+                        ${courtPlayers.map(player => `
                             <div class="player-name">${escapeHtml(player.player_name)}</div>
-                        `).join("") : `<div class="empty-court">Empty</div>`}
-                    </div>
-
-                    <div class="pair-box">
-                        <div class="pair-title">Pair 2</div>
-                        ${pairTwo.length > 0 ? pairTwo.map(player => `
-                            <div class="player-name">${escapeHtml(player.player_name)}</div>
-                        `).join("") : `<div class="empty-court">Empty</div>`}
+                        `).join("")}
                     </div>
                 `}
             </div>

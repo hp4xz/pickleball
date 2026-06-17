@@ -281,14 +281,6 @@ async function renderCourts() {
             player => player.court_number === court
         );
 
-        const pairOne = courtPlayers.filter(
-            player => player.pair_number === 1
-        );
-
-        const pairTwo = courtPlayers.filter(
-            player => player.pair_number === 2
-        );
-
         const courtCard = document.createElement("div");
         courtCard.className = "court-card";
 
@@ -301,18 +293,10 @@ async function renderCourts() {
                 ${courtPlayers.length === 0 ? `
                     <div class="empty-court">No players assigned</div>
                 ` : `
-                    <div class="pair-box">
-                        <div class="pair-title">Pair 1</div>
-                        ${pairOne.length > 0 ? pairOne.map(player => `
+                    <div class="court-player-box">
+                        ${courtPlayers.map(player => `
                             <div class="player-name">${player.player_name}</div>
-                        `).join("") : `<div class="empty-court">Empty</div>`}
-                    </div>
-
-                    <div class="pair-box">
-                        <div class="pair-title">Pair 2</div>
-                        ${pairTwo.length > 0 ? pairTwo.map(player => `
-                            <div class="player-name">${player.player_name}</div>
-                        `).join("") : `<div class="empty-court">Empty</div>`}
+                        `).join("")}
                     </div>
                 `}
             </div>
